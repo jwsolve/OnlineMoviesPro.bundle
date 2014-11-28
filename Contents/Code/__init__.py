@@ -17,6 +17,7 @@ ICON_SERIES = "icon-series.png"
 ICON_QUEUE = "icon-queue.png"
 BASE_URL = "http://onlinemovies.pro"
 MOVIES_URL = "http://onlinemovies.pro/category/genre"
+SERIES_URL = "http://onlinemovies.pro/category/serials"
 
 ######################################################################################
 # Set global variables
@@ -41,6 +42,7 @@ def MainMenu():
 
 	oc = ObjectContainer()
 	oc.add(DirectoryObject(key = Callback(ShowCategory, title="Movies", category="movies", page_count = 1), title = "Movies", thumb = R(ICON_MOVIES)))
+	oc.add(DirectoryObject(key = Callback(ShowCategory, title="Serials", category="Serials", page_count = 1), title = "Serials", thumb = R(ICON_MOVIES)))
 	return oc
 
 ######################################################################################
@@ -50,10 +52,16 @@ def MainMenu():
 def ShowCategory(title, category, page_count):
 
 	oc = ObjectContainer(title1 = title)
-	if str(page_count) == "1":
-		page_data = HTML.ElementFromURL(MOVIES_URL + '/?filtre=date')
-	else:
-		page_data = HTML.ElementFromURL(MOVIES_URL + '/page/' + str(page_count) + '/')
+	if category == "Movies":
+		if str(page_count) == "1":
+			page_data = HTML.ElementFromURL(MOVIES_URL + '/?filtre=date')
+		else:
+			page_data = HTML.ElementFromURL(MOVIES_URL + '/page/' + str(page_count) + '/')
+	if category == "Serials":
+		if str(page_count) == "1":
+			page_data = HTML.ElementFromURL(SERIES_URL + '/?filtre=date')
+		else:
+			page_data = HTML.ElementFromURL(SERIES_URL + '/page/' + str(page_count) + '/')
 
 	for each in page_data.xpath("//ul[@class='listing-videos listing-tube']/li"):
 		url = each.xpath("./a/@href")[0]
