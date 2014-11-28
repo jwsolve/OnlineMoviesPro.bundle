@@ -1,0 +1,87 @@
+import urllib, re
+
+#HTTP_HEADERS = {
+#    'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25',
+#    'Referer': 'http://videomega.tv'
+#}
+HTTP_HEADERS = {
+	'Host': '*.videomega.tv',
+	'Referer': 'http://onlinemovies.pro',
+	'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25'
+}
+
+BASE_URL = 'http://videomega.tv/'
+
+########################################################################################
+def NormalizeURL(url):
+
+	return url.split('&')[0]
+
+
+
+
+########################################################################################
+def MetadataObjectForURL(url):
+
+	page = HTML.ElementFromURL(url)
+
+	title = page.xpath("//meta[@name='description']/@content")
+	description = page.xpath("//meta[@name='description']/@content")[0]
+	thumb = page.xpath("//meta[@property='image']/text")
+	ratingvalue = url
+
+	req = HTML.ElementFromURL(url)
+	title = req.xpath('//title/text()')[0]
+	title = title.replace('VideoMega.tv - ','',1)
+	title = title.replace(' | www.onlinemovies.pro','',1)
+
+	req = HTTP.Request(url)
+	page_content = req.content
+	script_escaped = Regex('.*document.write\(unescape\(\"*(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(page_content).groups()[0]
+	javascript = urllib.unquote(script_escaped)
+	thumb = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', javascript)[0]
+
+	
+	return VideoClipObject(
+		title = title,
+		summary = description,
+		thumb = thumb,
+		rating_key = ratingvalue
+	)
+
+########################################################################################
+def MediaObjectsForURL(url):
+
+    req = HTTP.Request(url)
+    page_content = req.content
+    script_escaped = Regex('.*document.write\(unescape\(\"*(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(page_content).groups()[0]
+    javascript = urllib.unquote(script_escaped)
+    video_url = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', javascript)[1]
+    
+    return [
+            MediaObject(
+                video_resolution = '720',
+                container = Container.MP4,
+                audio_channels = 2,
+                video_codec = VideoCodec.H264,
+                audio_codec = AudioCodec.AAC,
+		optimized_for_streaming = True,
+                parts = [
+                    PartObject(
+                        key = 
+                            Callback(
+                                PlayVideo,
+                                url = video_url,
+                                fmt = 'lo'
+                            )
+                    )
+                ]
+            )      
+    ]
+
+########################################################################################
+@indirect
+def PlayVideo(url, fmt):
+
+	#return IndirectResponse(VideoClipObject, key = url)
+	return IndirectResponse(VideoClipObject, key = HTTPLiveStreamURL(url))
