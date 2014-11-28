@@ -59,7 +59,7 @@ def ShowCategory(title, category, page_count):
 		url = each.xpath("./a/@href")[0]
 		title = each.xpath("./img/@alt")[0]
 		thumb = each.xpath("./img/@src")[0]
-		title = url
+
 		oc.add(DirectoryObject(
 			key = Callback(EpisodeDetail, title = title, url = url),
 			title = title,
