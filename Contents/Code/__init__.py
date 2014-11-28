@@ -42,7 +42,7 @@ def MainMenu():
 
 	oc = ObjectContainer()
 	oc.add(DirectoryObject(key = Callback(ShowCategory, title="Movies", category="movies", page_count = 1), title = "Movies", thumb = R(ICON_MOVIES)))
-	oc.add(DirectoryObject(key = Callback(ShowCategory, title="Serials", category="Serials", page_count = 1), title = "Serials", thumb = R(ICON_MOVIES)))
+	oc.add(DirectoryObject(key = Callback(ShowCategory, title="Serials", category="serials", page_count = 1), title = "Serials", thumb = R(ICON_MOVIES)))
 	return oc
 
 ######################################################################################
@@ -52,12 +52,12 @@ def MainMenu():
 def ShowCategory(title, category, page_count):
 
 	oc = ObjectContainer(title1 = title)
-	if category == "Movies":
+	if category == "movies":
 		if str(page_count) == "1":
 			page_data = HTML.ElementFromURL(MOVIES_URL + '/?filtre=date')
 		else:
 			page_data = HTML.ElementFromURL(MOVIES_URL + '/page/' + str(page_count) + '/')
-	if category == "Serials":
+	if category == "serials:
 		if str(page_count) == "1":
 			page_data = HTML.ElementFromURL(SERIES_URL + '/?filtre=date')
 		else:
