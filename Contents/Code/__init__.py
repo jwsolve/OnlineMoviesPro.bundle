@@ -57,7 +57,7 @@ def ShowCategory(title, category, page_count):
 			page_data = HTML.ElementFromURL(MOVIES_URL + '/?filtre=date')
 		else:
 			page_data = HTML.ElementFromURL(MOVIES_URL + '/page/' + str(page_count) + '/')
-	if category == "serials:
+	if category == "serials":
 		if str(page_count) == "1":
 			page_data = HTML.ElementFromURL(SERIES_URL + '/?filtre=date')
 		else:
