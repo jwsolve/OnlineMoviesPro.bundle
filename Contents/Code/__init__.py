@@ -16,8 +16,8 @@ ICON_MOVIES = "icon-movies.png"
 ICON_SERIES = "icon-series.png"
 ICON_QUEUE = "icon-queue.png"
 BASE_URL = "http://onlinemovies.pro"
-MOVIES_URL = "http://onlinemovies.pro/category/genre"
-SERIES_URL = "http://onlinemovies.pro/category/serials"
+CATEGORY_URL = "http://onlinemovies.pro/category"
+CATEGORIES_URL = "http://onlinemovies.pro/categories/"
 
 ######################################################################################
 # Set global variables
@@ -31,8 +31,9 @@ def Start():
 	VideoClipObject.thumb = R(ICON_COVER)
 	VideoClipObject.art = R(ART)
 	
-	HTTP.Headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36'
-	HTTP.Headers['Referer'] = 'http://onlinemovies.pro/'
+	HTTP.CacheTime = CACHE_1HOUR
+	HTTP.Headers['User-Agent'] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36"
+	HTTP.Headers['Referer'] = "http://onlinemovies.pro/"
 	
 ######################################################################################
 # Menu hierarchy
@@ -41,8 +42,15 @@ def Start():
 def MainMenu():
 
 	oc = ObjectContainer()
-	oc.add(DirectoryObject(key = Callback(ShowCategory, title="Movies", category="movies", page_count = 1), title = "Movies", thumb = R(ICON_MOVIES)))
-	oc.add(DirectoryObject(key = Callback(ShowCategory, title="Serials", category="serials", page_count = 1), title = "Serials", thumb = R(ICON_MOVIES)))
+
+	channel_page = HTML.ElementFromURL(CATEGORIES_URL)
+	channels = channel_page.xpath("//ul[@class='listing-cat']/li")
+	for each in channels:
+		url = each.xpath("./a/@title")[0]
+		title = each.xpath("./a/@title")[0]
+		thumb = each.xpath("./img/@src")[0]
+		oc.add(DirectoryObject(key = Callback(ShowCategory, title = title, category = url, page_count = 1), title = title, thumb = thumb))
+	#oc.add(SearchDirectoryObject(identifier='com.plexapp.plugins.onlinemoviespro', title='Search', summary='Search Movies on OnlineMovies.Pro', prompt='Search for...'))
 	return oc
 
 ######################################################################################
@@ -52,16 +60,10 @@ def MainMenu():
 def ShowCategory(title, category, page_count):
 
 	oc = ObjectContainer(title1 = title)
-	if category == "movies":
-		if str(page_count) == "1":
-			page_data = HTML.ElementFromURL(MOVIES_URL + '/?filtre=date')
-		else:
-			page_data = HTML.ElementFromURL(MOVIES_URL + '/page/' + str(page_count) + '/')
-	if category == "serials":
-		if str(page_count) == "1":
-			page_data = HTML.ElementFromURL(SERIES_URL + '/?filtre=date')
-		else:
-			page_data = HTML.ElementFromURL(SERIES_URL + '/page/' + str(page_count) + '/')
+	if str(page_count) == "1":
+		page_data = HTML.ElementFromURL(CATEGORY_URL + '/' + str(category) + '/?filtre=date')
+	else:
+		page_data = HTML.ElementFromURL(CATEGORY_URL + '/' + str(category) + '/page/' + str(page_count) + '/')
 
 	for each in page_data.xpath("//ul[@class='listing-videos listing-tube']/li"):
 		url = each.xpath("./a/@href")[0]
@@ -76,7 +78,7 @@ def ShowCategory(title, category, page_count):
 		)
 
 	oc.add(NextPageObject(
-		key = Callback(ShowCategory, title = "Movies", category = category, page_count = int(page_count) + 1),
+		key = Callback(ShowCategory, title = category, category = category, page_count = int(page_count) + 1),
 		title = "Next...",
 		thumb = R(ICON_NEXT)
 			)
@@ -105,4 +107,4 @@ def EpisodeDetail(title, url):
 		)
 	)	
 	
-	return oc	
+	return oc
