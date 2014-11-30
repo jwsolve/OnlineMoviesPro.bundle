@@ -49,8 +49,10 @@ def MainMenu():
 		url = each.xpath("./a/@title")[0]
 		title = each.xpath("./a/@title")[0]
 		thumb = each.xpath("./img/@src")[0]
+		url = url.replace('%2b','-')
+		url = url.replace(' ', '-')
 		oc.add(DirectoryObject(key = Callback(ShowCategory, title = title, category = url, page_count = 1), title = title, thumb = thumb))
-	#oc.add(SearchDirectoryObject(identifier='com.plexapp.plugins.onlinemoviespro', title='Search', summary='Search Movies on OnlineMovies.Pro', prompt='Search for...'))
+	oc.add(SearchDirectoryObject(identifier='com.plexapp.plugins.onlinemoviespro', title='Search', summary='Search Movies on OnlineMovies.Pro', prompt='Search for...'))
 	return oc
 
 ######################################################################################
@@ -98,7 +100,12 @@ def EpisodeDetail(title, url):
 	thumb = page_data.xpath("//div[@id='video']/meta/@content")
 
 	#load recursive iframes to find google docs url
-	first_frame_url = page_data.xpath("//div[@class='video-embed']/iframe/@src")[0]
+	try:
+		first_frame_url = page_data.xpath("//div[@class='video-embed']/iframe/@src")[0]
+	except:
+		valref = page_data.xpath("//div[@class='video-embed']/iframe/@src")[0]
+		first_frame_url = valref.replace('&val=1','',1)
+		#return ObjectContainer(header="Error", message="Unfortunately this video is unavailable")
 	
 	oc.add(VideoClipObject(
 		url = first_frame_url,
