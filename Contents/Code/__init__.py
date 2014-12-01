@@ -42,7 +42,6 @@ def Start():
 def MainMenu():
 
 	oc = ObjectContainer()
-
 	channel_page = HTML.ElementFromURL(CATEGORIES_URL)
 	channels = channel_page.xpath("//ul[@class='listing-cat']/li")
 	for each in channels:
@@ -53,6 +52,7 @@ def MainMenu():
 		url = url.replace(' ', '-')
 		oc.add(DirectoryObject(key = Callback(ShowCategory, title = title, category = url, page_count = 1), title = title, thumb = thumb))
 	oc.add(SearchDirectoryObject(identifier='com.plexapp.plugins.onlinemoviespro', title='Search', summary='Search Movies on OnlineMovies.Pro', prompt='Search for...'))
+
 	return oc
 
 ######################################################################################
@@ -103,9 +103,7 @@ def EpisodeDetail(title, url):
 	try:
 		first_frame_url = page_data.xpath("//div[@class='video-embed']/iframe/@src")[0]
 	except:
-		valref = page_data.xpath("//div[@class='video-embed']/iframe/@src")[0]
-		first_frame_url = valref.replace('&val=1','',1)
-		#return ObjectContainer(header="Error", message="Unfortunately this video is unavailable")
+		return ObjectContainer(header="Error", message="Unfortunately this video is unavailable")
 	
 	oc.add(VideoClipObject(
 		url = first_frame_url,

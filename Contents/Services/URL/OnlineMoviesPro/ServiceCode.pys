@@ -77,4 +77,4 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, fmt):
 
-	return IndirectResponse(VideoClipObject, key = HTTPLiveStreamURL(url))
+	return IndirectResponse(VideoClipObject, key = url)
