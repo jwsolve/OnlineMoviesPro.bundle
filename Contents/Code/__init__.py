@@ -51,7 +51,6 @@ def MainMenu():
 		url = url.replace('%2b','-')
 		url = url.replace(' ', '-')
 		oc.add(DirectoryObject(key = Callback(ShowCategory, title = title, category = url, page_count = 1), title = title, thumb = thumb))
-	
 	oc.add(SearchDirectoryObject(identifier='com.plexapp.plugins.onlinemoviespro', title='Search', summary='Search Movies on OnlineMovies.Pro', prompt='Search for...'))
 
 	return oc
@@ -72,47 +71,18 @@ def ShowCategory(title, category, page_count):
 		url = each.xpath("./a/@href")[0]
 		title = each.xpath("./img/@alt")[0]
 		thumb = each.xpath("./img/@src")[0]
-		if str(category) == "Tv":
-			oc.add(DirectoryObject(
-				key = Callback(ShowEpisodes, title = title, url = url),
-				title = title,
-				thumb = Resource.ContentsOfURLWithFallback(url = thumb, fallback='icon-cover.png')
-				)
-			)
-		else:
-			oc.add(DirectoryObject(
-				key = Callback(EpisodeDetail, title = title, url = url),
-				title = title,
-				thumb = Resource.ContentsOfURLWithFallback(url = thumb, fallback='icon-cover.png')
-				)
-			)
-
-	oc.add(NextPageObject(
-		key = Callback(ShowCategory, title = category, category = category, page_count = int(page_count) + 1),
-		title = "Next...",
-		thumb = R(ICON_NEXT)
-			)
-		)
-	
-	return oc
-
-######################################################################################
-# Creates page url from tv episodes and creates objects from that page
-
-@route(PREFIX + "/showepisodes")	
-def ShowEpisodes(title, url):
-
-	oc = ObjectContainer(title1 = title)
-	page_data = HTML.ElementFromURL(url)
-	for each in page_data.xpath("//table[@class='table']/tbody/tr"):
-		url = each.xpath("./td[@class='entry2']/a/@href")[0]
-		title = each.xpath("./td[@class='entry2']/a/@title")[0]
-		thumb = each.xpath(".//td[@class='entry2']/a/img/@src")[0]
 
 		oc.add(DirectoryObject(
 			key = Callback(EpisodeDetail, title = title, url = url),
 			title = title,
 			thumb = Resource.ContentsOfURLWithFallback(url = thumb, fallback='icon-cover.png')
+			)
+		)
+
+	oc.add(NextPageObject(
+		key = Callback(ShowCategory, title = category, category = category, page_count = int(page_count) + 1),
+		title = "Next...",
+		thumb = R(ICON_NEXT)
 			)
 		)
 	
