@@ -14,10 +14,10 @@ ICON_SEARCH = "icon-search.png"
 ICON_NEXT = "icon-next.png"
 ICON_MOVIES = "icon-movies.png"
 ICON_SERIES = "icon-series.png"
-ICON_QUEUE = "icon-queue.png"
 BASE_URL = "http://onlinemovies.pro"
 CATEGORY_URL = "http://onlinemovies.pro/category"
 CATEGORIES_URL = "http://onlinemovies.pro/categories/"
+SEARCH_URL = 'http://onlinemovies.pro/'
 
 ######################################################################################
 # Set global variables
@@ -42,6 +42,7 @@ def Start():
 def MainMenu():
 
 	oc = ObjectContainer()
+	oc.add(InputDirectoryObject(key = Callback(Search), title='Search', summary='Search OnlineMovies.Pro', prompt='Search for...'))
 	channel_page = HTML.ElementFromURL(CATEGORIES_URL)
 	channels = channel_page.xpath("//ul[@class='listing-cat']/li")
 	for each in channels:
@@ -51,8 +52,6 @@ def MainMenu():
 		url = url.replace('%2b','-')
 		url = url.replace(' ', '-')
 		oc.add(DirectoryObject(key = Callback(ShowCategory, title = title, category = url, page_count = 1), title = title, thumb = thumb))
-	
-	oc.add(SearchDirectoryObject(identifier='com.plexapp.plugins.onlinemoviespro', title='Search', summary='Search Movies on OnlineMovies.Pro', prompt='Search for...'))
 
 	return oc
 
@@ -76,7 +75,7 @@ def ShowCategory(title, category, page_count):
 			oc.add(DirectoryObject(
 				key = Callback(ShowEpisodes, title = title, url = url),
 				title = title,
-				thumb = Resource.ContentsOfURLWithFallback(url = thumb, fallback='icon-cover.png')
+				thumb = Resource.ContentsOfURLWithFallback(url = thumb, fallback='icon-series.png')
 				)
 			)
 		else:
@@ -106,7 +105,8 @@ def ShowEpisodes(title, url):
 	page_data = HTML.ElementFromURL(url)
 	for each in page_data.xpath("//table[@class='table']/tbody/tr"):
 		url = each.xpath("./td[@class='entry2']/a/@href")[0]
-		title = each.xpath("./td[@class='entry2']/a/@title")[0]
+		#title = each.xpath("./td[@class='entry2']/a/@title")[0]
+		title = each.xpath("./td[@class='entry']/text()")[0] + ' - ' + each.xpath(".//td[@class='entry2']/a/@title")[0]
 		thumb = each.xpath(".//td[@class='entry2']/a/img/@src")[0]
 
 		oc.add(DirectoryObject(
@@ -126,10 +126,12 @@ def EpisodeDetail(title, url):
 	
 	oc = ObjectContainer(title1 = title)
 	page_data = HTML.ElementFromURL(url)
-	title = page_data.xpath("//div[@id='video']/h1/span/text()")[0]
+	try:
+		title = page_data.xpath("//div[@id='video']/h1/span/text()")[0]
+	except:
+		title = page_data.xpath("//div[@id='video']/h1/span/text()")
 	thumb = page_data.xpath("//div[@id='video']/meta/@content")
 
-	#load recursive iframes to find google docs url
 	try:
 		first_frame_url = page_data.xpath("//div[@class='video-embed']/iframe/@src")[0]
 	except:
@@ -142,4 +144,27 @@ def EpisodeDetail(title, url):
 		)
 	)	
 	
+	return oc
+
+####################################################################################################
+@route(PREFIX + "/search")
+def Search(query):
+
+	oc = ObjectContainer(title2='Search Results')
+	data = HTTP.Request(SEARCH_URL + '?s=%s' % String.Quote(query, usePlus=True), headers="").content
+
+	html = HTML.ElementFromString(data)
+
+	for movie in html.xpath("//ul[@class='listing-videos listing-tube']/li"):
+		url = movie.xpath("./a/@href")[0]
+		title = movie.xpath("./img/@alt")[0]
+		thumb = movie.xpath("./img/@src")[0]
+
+		oc.add(DirectoryObject(
+				key = Callback(EpisodeDetail, title = title, url = url),
+				title = title,
+				thumb = Resource.ContentsOfURLWithFallback(url = thumb, fallback='icon-cover.png')
+				)
+		)
+
 	return oc

@@ -32,7 +32,7 @@ def MetadataObjectForURL(url):
 
 	req = HTTP.Request(url)
 	page_content = req.content
-	script_escaped = Regex('.*document.write\(unescape\(\"*(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(page_content).groups()[0]
+	script_escaped = Regex('.*{\s+document\.write\(unescape\(\"*(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(page_content).groups()[0]
 	javascript = urllib.unquote(script_escaped)
 	thumb = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', javascript)[0]
 	
@@ -46,32 +46,36 @@ def MetadataObjectForURL(url):
 ########################################################################################
 def MediaObjectsForURL(url):
 
-    req = HTTP.Request(url)
-    page_content = req.content
-    script_escaped = Regex('.*document.write\(unescape\(\"*(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(page_content).groups()[0]
-    javascript = urllib.unquote(script_escaped)
-    video_url = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', javascript)[1]
-    
-    return [
-            MediaObject(
-                video_resolution = '720',
-                container = Container.MP4,
-                audio_channels = 2,
-                video_codec = VideoCodec.H264,
-                audio_codec = AudioCodec.AAC,
-		optimized_for_streaming = True,
-                parts = [
-                    PartObject(
-                        key = 
-                            Callback(
-                                PlayVideo,
-                                url = video_url,
-                                fmt = 'lo'
-                            )
-                    )
-                ]
-            )      
-    ]
+	req = HTTP.Request(url)
+	page_content = req.content
+	script_escaped = Regex('.*{\s+document\.write\(unescape\(\"*(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(page_content).groups()[0]
+
+	javascript = urllib.unquote(script_escaped)
+	try:
+		video_url = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', javascript)[1]
+	except:
+		video_url = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', script_escaped)[1]
+
+	return [
+        	MediaObject(
+			video_resolution = '720',
+			container = Container.MP4,
+			audio_channels = 2,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			optimized_for_streaming = True,
+			parts = [
+				PartObject(
+					key = 
+						Callback(
+							PlayVideo,
+							url = video_url,
+							fmt = 'lo'
+						)
+					)
+				]
+			)
+	]
 
 ########################################################################################
 @indirect

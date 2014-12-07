@@ -11,13 +11,5 @@
 			</array>
 		</dict>
 	</dict>
-	<key>Search</key>
-	<dict>
-		<key>OnlineMoviesPro</key>
-		<dict>
-			<key>Identifier</key>
-			<string>com.plexapp.plugins.onlinemoviespro</string>
-		</dict>
-	</dict>
 </dict>
 </plist>
