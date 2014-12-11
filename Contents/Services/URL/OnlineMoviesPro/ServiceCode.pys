@@ -54,11 +54,11 @@ def MediaObjectsForURL(url):
 	try:
 		video_url = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', javascript)[1]
 	except:
-		video_url = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', script_escaped)[1]
+		video_url = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', javascript)[0]
 
 	return [
         	MediaObject(
-			video_resolution = '720',
+			video_resolution = '1280',
 			container = Container.MP4,
 			audio_channels = 2,
 			video_codec = VideoCodec.H264,
@@ -70,7 +70,7 @@ def MediaObjectsForURL(url):
 						Callback(
 							PlayVideo,
 							url = video_url,
-							fmt = 'lo'
+							fmt = 'hi33w'
 						)
 					)
 				]
