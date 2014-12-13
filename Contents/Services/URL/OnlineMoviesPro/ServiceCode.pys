@@ -58,7 +58,7 @@ def MediaObjectsForURL(url):
 
 	return [
         	MediaObject(
-			video_resolution = '1280',
+			video_resolution = '720',
 			container = Container.MP4,
 			audio_channels = 2,
 			video_codec = VideoCodec.H264,
@@ -70,7 +70,7 @@ def MediaObjectsForURL(url):
 						Callback(
 							PlayVideo,
 							url = video_url,
-							fmt = 'hi33w'
+							fmt = 'hi'
 						)
 					)
 				]
