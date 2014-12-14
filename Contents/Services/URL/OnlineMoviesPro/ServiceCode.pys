@@ -56,14 +56,10 @@ def MediaObjectsForURL(url):
 	except:
 		video_url = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', javascript)[0]
 
+	video_url = video_url + "&hashkey1=840150940450650350650940250940&hashkey2=614fde1d3c00ed6f66b8c77d8663c81cf84b6b85"
+
 	return [
         	MediaObject(
-			video_resolution = '720',
-			container = Container.MP4,
-			audio_channels = 2,
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			optimized_for_streaming = True,
 			parts = [
 				PartObject(
 					key = 
@@ -73,7 +69,13 @@ def MediaObjectsForURL(url):
 							fmt = 'hi'
 						)
 					)
-				]
+				],
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			video_resolution = '720',
+			audio_channels = 2,
+			optimized_for_streaming = True if Client.Product != 'Plex Web' else False
 			)
 	]
 
