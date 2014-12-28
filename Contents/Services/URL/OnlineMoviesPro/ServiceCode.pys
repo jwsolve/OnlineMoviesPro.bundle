@@ -1,5 +1,3 @@
-import urllib, re
-
 HTTP_HEADERS = {
 	'Host': '*.videomega.tv',
 	'Referer': 'http://onlinemovies.pro',
@@ -27,20 +25,18 @@ def MetadataObjectForURL(url):
 
 	req = HTML.ElementFromURL(url)
 	title = req.xpath('//title/text()')[0]
-	title = title.replace('VideoMega.tv - ','',1)
-	title = title.replace(' | www.onlinemovies.pro','',1)
+	title = title.replace('VideoMega.tv - ','',1).replace(' | www.onlinemovies.pro','',1)
 
 	req = HTTP.Request(url)
 	page_content = req.content
 	script_escaped = Regex('.*{\s+document\.write\(unescape\(\"*(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(page_content).groups()[0]
-	javascript = urllib.unquote(script_escaped)
-	thumb = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', javascript)[0]
+	javascript = String.Unquote(script_escaped)
+	thumb = Regex('image: *"([^"]+)"').search(javascript).groups()[0]
 	
 	return VideoClipObject(
 		title = title,
 		summary = description,
-		thumb = thumb,
-		rating_key = ratingvalue
+		thumb = thumb
 	)
 
 ########################################################################################
@@ -50,11 +46,8 @@ def MediaObjectsForURL(url):
 	page_content = req.content
 	script_escaped = Regex('.*{\s+document\.write\(unescape\(\"*(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(page_content).groups()[0]
 
-	javascript = urllib.unquote(script_escaped)
-	try:
-		video_url = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', javascript)[1]
-	except:
-		video_url = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', javascript)[0]
+	javascript = String.Unquote(script_escaped)
+	video_url = Regex('file: *"([^"]+)"').search(javascript).groups()[0]
 
 	return [
         	MediaObject(
@@ -64,21 +57,24 @@ def MediaObjectsForURL(url):
 						Callback(
 							PlayVideo,
 							url = video_url,
-							fmt = 'hi'
+							post_url = url,
+							res = resolution
 						)
 					)
 				],
 			container = Container.MP4,
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
-			video_resolution = '720',
+			video_resolution = resolution,
 			audio_channels = 2,
+			bitrate = bitrate,
 			optimized_for_streaming = True if Client.Product != 'Plex Web' else False
-			)
+			) for resolution, bitrate in [('1080', 3000), ('720', 1500), ('360', 750)]
 	]
+
 
 ########################################################################################
 @indirect
-def PlayVideo(url, fmt):
+def PlayVideo(url, res):
 
 	return IndirectResponse(VideoClipObject, key = url)
