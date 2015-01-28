@@ -42,7 +42,7 @@ def Start():
 def MainMenu():
 
 	oc = ObjectContainer()
-	#oc.add(InputDirectoryObject(key = Callback(Search), title='Search', summary='Search OnlineMovies.Pro', prompt='Search for...'))
+	oc.add(InputDirectoryObject(key = Callback(Search), title='Search', summary='Search OnlineMovies.Pro', prompt='Search for...'))
 	channel_page = HTML.ElementFromURL(CATEGORIES_URL)
 	channels = channel_page.xpath("//ul[@class='listing-cat']/li")
 	for each in channels:
@@ -105,7 +105,6 @@ def ShowEpisodes(title, url):
 	page_data = HTML.ElementFromURL(url)
 	for each in page_data.xpath("//table[@class='table']/tbody/tr"):
 		url = each.xpath("./td[@class='entry2']/a/@href")[0]
-		#title = each.xpath("./td[@class='entry2']/a/@title")[0]
 		title = each.xpath("./td[@class='entry']/text()")[0] + ' - ' + each.xpath(".//td[@class='entry2']/a/@title")[0]
 		thumb = each.xpath(".//td[@class='entry2']/a/img/@src")[0]
 
@@ -141,24 +140,24 @@ def EpisodeDetail(title, url):
 	return oc
 
 ####################################################################################################
-#@route(PREFIX + "/search")
-#def Search(query):
+@route(PREFIX + "/search")
+def Search(query):
 
-#	oc = ObjectContainer(title2='Search Results')
-#	data = HTTP.Request(SEARCH_URL + '?s=%s' % String.Quote(query, usePlus=True), headers="").content
+	oc = ObjectContainer(title2='Search Results')
+	data = HTTP.Request(SEARCH_URL + '?s=%s' % String.Quote(query, usePlus=True), headers="").content
 
-#	html = HTML.ElementFromString(data)
+	html = HTML.ElementFromString(data)
 
-#	for movie in html.xpath("//ul[@class='listing-videos listing-tube']/li"):
-#		url = movie.xpath("./a/@href")[0]
-#		title = movie.xpath("./img/@alt")[0]
-#		thumb = movie.xpath("./img/@src")[0]
+	for movie in html.xpath("//ul[@class='listing-videos listing-tube']/li"):
+		url = movie.xpath("./a/@href")[0]
+		title = movie.xpath("./img/@alt")[0]
+		thumb = movie.xpath("./img/@src")[0]
 
-#		oc.add(DirectoryObject(
-#				key = Callback(EpisodeDetail, title = title, url = url),
-#				title = title,
-#				thumb = Resource.ContentsOfURLWithFallback(url = thumb, fallback='icon-cover.png')
-#				)
-#		)
+		oc.add(DirectoryObject(
+				key = Callback(EpisodeDetail, title = title, url = url),
+				title = title,
+				thumb = Resource.ContentsOfURLWithFallback(url = thumb, fallback='icon-cover.png')
+				)
+		)
 
-#	return oc
+	return oc
