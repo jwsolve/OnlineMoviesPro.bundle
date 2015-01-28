@@ -22,7 +22,7 @@ def MetadataObjectForURL(url):
 	try:
 		description = html.xpath("//div[@id='video-synopsys']/p[3]/text()")[0]
 	except:
-		description = "Watch Movie"
+		description = html.xpath("//div[@id='video-synopsys']/p[2]/text()")[0]
 	thumb = html.xpath("//div[@id='video-synopsys']/p/strong/a/img/@src")[0]
 	
 	return VideoClipObject(
@@ -72,7 +72,7 @@ def PlayVideo(url, res):
 	req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; rv:34.0) Gecko/20100101 Firefox/34.0')
 	req.add_header('Referer', referer)
 	response = urllib2.urlopen(req)
-	link=response.read()
+	link = response.read()
 	response.close()
 
 	url = re.compile('document.write.unescape."(.+?)"').findall(link)[-1]
