@@ -16,11 +16,11 @@ def NormalizeURL(url):
 ########################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url)
+	html = HTML.ElementFromURL(url)
 
-	title = url
-	description = url
-	thumb = url
+	title = html.xpath("//h1[@class='border-radius-top-5']/span/text()")[0]
+	description = html.xpath("//div[@id='video-synopsys']/p[3]/text()")[0]
+	thumb = html.xpath("//div[@id='video-synopsys']/p/strong/a/img/@src")[0]
 	
 	return VideoClipObject(
 		title = title,
@@ -57,6 +57,9 @@ def MediaObjectsForURL(url):
 ########################################################################################
 @indirect
 def PlayVideo(url, res):
+
+	html = HTML.ElementFromURL(url)
+	url = html.xpath("//div[@class='video-embed']/iframe/@src")[0]
 
 	url = urlparse.urlparse(url).query
 	url = urlparse.parse_qs(url)['ref'][0]

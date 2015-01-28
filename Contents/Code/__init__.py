@@ -42,7 +42,7 @@ def Start():
 def MainMenu():
 
 	oc = ObjectContainer()
-	oc.add(InputDirectoryObject(key = Callback(Search), title='Search', summary='Search OnlineMovies.Pro', prompt='Search for...'))
+	#oc.add(InputDirectoryObject(key = Callback(Search), title='Search', summary='Search OnlineMovies.Pro', prompt='Search for...'))
 	channel_page = HTML.ElementFromURL(CATEGORIES_URL)
 	channels = channel_page.xpath("//ul[@class='listing-cat']/li")
 	for each in channels:
@@ -132,13 +132,13 @@ def EpisodeDetail(title, url):
 		title = page_data.xpath("//div[@id='video']/h1/span/text()")
 	thumb = page_data.xpath("//div[@id='video']/meta/@content")
 
-	try:
-		first_frame_url = page_data.xpath("//div[@class='video-embed']/iframe/@src")[0]
-	except:
-		return ObjectContainer(header="Error", message="Unfortunately this video is unavailable")
-	
+	#try:
+	#	first_frame_url = page_data.xpath("//div[@class='video-embed']/iframe/@src")[0]
+	#except:
+	#	return ObjectContainer(header="Error", message="Unfortunately this video is unavailable")
+	title = url
 	oc.add(VideoClipObject(
-		url = first_frame_url,
+		url = url,
 		title = title,
 		thumb = Resource.ContentsOfURLWithFallback(url = thumb, fallback='icon-movies.png')
 		)
@@ -147,24 +147,24 @@ def EpisodeDetail(title, url):
 	return oc
 
 ####################################################################################################
-@route(PREFIX + "/search")
-def Search(query):
+#@route(PREFIX + "/search")
+#def Search(query):
 
-	oc = ObjectContainer(title2='Search Results')
-	data = HTTP.Request(SEARCH_URL + '?s=%s' % String.Quote(query, usePlus=True), headers="").content
+#	oc = ObjectContainer(title2='Search Results')
+#	data = HTTP.Request(SEARCH_URL + '?s=%s' % String.Quote(query, usePlus=True), headers="").content
 
-	html = HTML.ElementFromString(data)
+#	html = HTML.ElementFromString(data)
 
-	for movie in html.xpath("//ul[@class='listing-videos listing-tube']/li"):
-		url = movie.xpath("./a/@href")[0]
-		title = movie.xpath("./img/@alt")[0]
-		thumb = movie.xpath("./img/@src")[0]
+#	for movie in html.xpath("//ul[@class='listing-videos listing-tube']/li"):
+#		url = movie.xpath("./a/@href")[0]
+#		title = movie.xpath("./img/@alt")[0]
+#		thumb = movie.xpath("./img/@src")[0]
 
-		oc.add(DirectoryObject(
-				key = Callback(EpisodeDetail, title = title, url = url),
-				title = title,
-				thumb = Resource.ContentsOfURLWithFallback(url = thumb, fallback='icon-cover.png')
-				)
-		)
+#		oc.add(DirectoryObject(
+#				key = Callback(EpisodeDetail, title = title, url = url),
+#				title = title,
+#				thumb = Resource.ContentsOfURLWithFallback(url = thumb, fallback='icon-cover.png')
+#				)
+#		)
 
-	return oc
+#	return oc
