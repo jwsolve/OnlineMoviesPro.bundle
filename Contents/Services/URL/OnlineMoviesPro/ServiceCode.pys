@@ -19,7 +19,10 @@ def MetadataObjectForURL(url):
 	html = HTML.ElementFromURL(url)
 
 	title = html.xpath("//h1[@class='border-radius-top-5']/span/text()")[0]
-	description = html.xpath("//div[@id='video-synopsys']/p[3]/text()")[0]
+	try:
+		description = html.xpath("//div[@id='video-synopsys']/p[3]/text()")[0]
+	except:
+		description = "Watch Movie"
 	thumb = html.xpath("//div[@id='video-synopsys']/p/strong/a/img/@src")[0]
 	
 	return VideoClipObject(
