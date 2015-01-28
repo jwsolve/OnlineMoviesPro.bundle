@@ -1,5 +1,7 @@
+import urllib,urllib2,re,urlparse
+
 HTTP_HEADERS = {
-	'Host': '*.videomega.tv',
+	'Host': 'videomega.tv',
 	'Referer': 'http://onlinemovies.pro',
 	'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25'
 }
@@ -11,27 +13,14 @@ def NormalizeURL(url):
 	return url.split('&')[0]
 
 
-
-
 ########################################################################################
 def MetadataObjectForURL(url):
 
 	page = HTML.ElementFromURL(url)
 
-	title = page.xpath("//meta[@name='description']/@content")
-	description = page.xpath("//meta[@name='description']/@content")[0]
-	thumb = page.xpath("//meta[@property='image']/text")
-	ratingvalue = url
-
-	req = HTML.ElementFromURL(url)
-	title = req.xpath('//title/text()')[0]
-	title = title.replace('VideoMega.tv - ','',1).replace(' | www.onlinemovies.pro','',1)
-
-	req = HTTP.Request(url)
-	page_content = req.content
-	script_escaped = Regex('.*{\s+document\.write\(unescape\(\"*(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(page_content).groups()[0]
-	javascript = String.Unquote(script_escaped)
-	thumb = Regex('image: *"([^"]+)"').search(javascript).groups()[0]
+	title = url
+	description = url
+	thumb = url
 	
 	return VideoClipObject(
 		title = title,
@@ -42,13 +31,6 @@ def MetadataObjectForURL(url):
 ########################################################################################
 def MediaObjectsForURL(url):
 
-	req = HTTP.Request(url)
-	page_content = req.content
-	script_escaped = Regex('.*{\s+document\.write\(unescape\(\"*(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(page_content).groups()[0]
-
-	javascript = String.Unquote(script_escaped)
-	video_url = Regex('file: *"([^"]+)"').search(javascript).groups()[0]
-
 	return [
         	MediaObject(
 			parts = [
@@ -56,20 +38,19 @@ def MediaObjectsForURL(url):
 					key = 
 						Callback(
 							PlayVideo,
-							url = video_url,
-							post_url = url,
-							res = resolution
+							url = url,
+							res = 720
 						)
 					)
 				],
 			container = Container.MP4,
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
-			video_resolution = resolution,
+			video_resolution = 720,
 			audio_channels = 2,
-			bitrate = bitrate,
+			bitrate = 1500,
 			optimized_for_streaming = True if Client.Product != 'Plex Web' else False
-			) for resolution, bitrate in [('1080', 3000), ('720', 1500), ('360', 750)]
+			)
 	]
 
 
@@ -77,4 +58,19 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, res):
 
-	return IndirectResponse(VideoClipObject, key = url)
+	url = urlparse.urlparse(url).query
+	url = urlparse.parse_qs(url)['ref'][0]
+	url = 'http://videomega.tv/iframe.php?ref=%s' % url
+	referer = url
+	req = urllib2.Request(url,None)
+	req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; rv:34.0) Gecko/20100101 Firefox/34.0')
+	req.add_header('Referer', referer)
+	response = urllib2.urlopen(req)
+	link=response.read()
+	response.close()
+
+	url = re.compile('document.write.unescape."(.+?)"').findall(link)[-1]
+	url = urllib.unquote_plus(url)
+	video_url = re.compile('file *: *"(.+?)"').findall(url)[0]
+
+	return IndirectResponse(VideoClipObject, key = video_url)
