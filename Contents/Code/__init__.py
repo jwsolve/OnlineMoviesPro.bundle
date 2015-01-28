@@ -131,12 +131,6 @@ def EpisodeDetail(title, url):
 	except:
 		title = page_data.xpath("//div[@id='video']/h1/span/text()")
 	thumb = page_data.xpath("//div[@id='video']/meta/@content")
-
-	#try:
-	#	first_frame_url = page_data.xpath("//div[@class='video-embed']/iframe/@src")[0]
-	#except:
-	#	return ObjectContainer(header="Error", message="Unfortunately this video is unavailable")
-	title = url
 	oc.add(VideoClipObject(
 		url = url,
 		title = title,
