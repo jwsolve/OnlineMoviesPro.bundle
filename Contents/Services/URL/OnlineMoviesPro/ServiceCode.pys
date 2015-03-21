@@ -1,9 +1,10 @@
 import urllib,urllib2,re,urlparse
 
 HTTP_HEADERS = {
-	'Host': 'videomega.tv',
-	'Referer': 'http://onlinemovies.pro',
-	'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25'
+	'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+	'Host': '*.videomega.tv',
+	'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25',
+	'Cookie': '__cfduid=dc7dfd3760c6da7426469589aa75276bb1423093649'
 }
 
 
@@ -19,40 +20,13 @@ def MetadataObjectForURL(url):
 	html = HTML.ElementFromURL(url)
 
 	title = html.xpath("//h1[@class='border-radius-top-5']/span/text()")[0]
-	try:
-		description = html.xpath("//div[@id='video-synopsys']/p[3]/text()")[0]
-	except:
-		description = html.xpath("//div[@id='video-synopsys']/p[2]/text()")[0]
-	try:
-		thumb = html.xpath("//div[@id='video-synopsys']/p/strong/a/img/@src")[0]
-	except:
-		thumb = url
-
-	url = html.xpath("//div[@class='video-embed']/iframe/@src")[0]
-
-	url = urlparse.urlparse(url).query
-	url = urlparse.parse_qs(url)['ref'][0]
-	url = 'http://videomega.tv/iframe.php?ref=%s' % url
-	referer = url
-	req = urllib2.Request(url,None)
-	req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; rv:34.0) Gecko/20100101 Firefox/34.0')
-	req.add_header('Referer', referer)
-	response = urllib2.urlopen(req)
-	link = response.read()
-	response.close()
-
-	url = re.compile('document.write.unescape."(.+?)"').findall(link)[-1]
-	url = urllib.unquote_plus(url)
-	try:
-		subtitle = re.compile('file *: *"(.+?)"').findall(url)[1]
-	except:
-		subtitle = ""
+	description = title
+	thumb = html.xpath("//meta[@itemprop='image']/@content")[0]
 
 	return VideoClipObject(
 		title = title,
 		summary = description,
-		thumb = thumb,
-		source_title = subtitle
+		thumb = thumb
 	)
 
 ########################################################################################
@@ -66,7 +40,7 @@ def MediaObjectsForURL(url):
 						Callback(
 							PlayVideo,
 							url = url,
-							res = 720
+							fmt = 720
 						)
 					)
 				],
@@ -80,10 +54,9 @@ def MediaObjectsForURL(url):
 			)
 	]
 
-
 ########################################################################################
 @indirect
-def PlayVideo(url, res):
+def PlayVideo(url, fmt):
 
 	html = HTML.ElementFromURL(url)
 	url = html.xpath("//div[@class='video-embed']/iframe/@src")[0]
@@ -94,13 +67,13 @@ def PlayVideo(url, res):
 	referer = url
 	req = urllib2.Request(url,None)
 	req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; rv:34.0) Gecko/20100101 Firefox/34.0')
+	req.add_header('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
 	req.add_header('Referer', referer)
 	response = urllib2.urlopen(req)
 	link = response.read()
 	response.close()
 
-	url = re.compile('document.write.unescape."(.+?)"').findall(link)[-1]
-	url = urllib.unquote_plus(url)
-	video_url = re.compile('file *: *"(.+?)"').findall(url)[0]
+	video_url = re.compile('source src="(.+?)"').findall(link)[0].split("&")[0]
 
 	return IndirectResponse(VideoClipObject, key = video_url)
+
