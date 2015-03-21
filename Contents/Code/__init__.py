@@ -69,7 +69,10 @@ def ShowCategory(title, category, page_count):
 
 	for each in page_data.xpath("//ul[@class='listing-videos listing-tube']/li"):
 		url = each.xpath("./a/@href")[0]
-		title = each.xpath("./img/@title")[0]
+		try:
+			title = each.xpath("./img/@title")[0]
+		except:
+			title = each.xpath("./img/@alt")[0]
 		thumb = each.xpath("./img/@src")[0]
 		if str(category) == "Tv":
 			oc.add(DirectoryObject(
@@ -150,7 +153,10 @@ def Search(query):
 
 	for movie in html.xpath("//ul[@class='listing-videos listing-tube']/li"):
 		url = movie.xpath("./a/@href")[0]
-		title = movie.xpath("./img/@title")[0]
+		try:
+			title = movie.xpath("./img/@title")[0]
+		except:
+			title = movie.xpath("./img/@alt")[0]
 		thumb = movie.xpath("./img/@src")[0]
 
 		oc.add(DirectoryObject(
