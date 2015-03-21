@@ -150,7 +150,7 @@ def Search(query):
 
 	for movie in html.xpath("//ul[@class='listing-videos listing-tube']/li"):
 		url = movie.xpath("./a/@href")[0]
-		title = movie.xpath("./img/@alt")[0]
+		title = movie.xpath("./img/@title")[0]
 		thumb = movie.xpath("./img/@src")[0]
 
 		oc.add(DirectoryObject(
