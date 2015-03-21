@@ -69,7 +69,7 @@ def ShowCategory(title, category, page_count):
 
 	for each in page_data.xpath("//ul[@class='listing-videos listing-tube']/li"):
 		url = each.xpath("./a/@href")[0]
-		title = each.xpath("./img/@alt")[0]
+		title = each.xpath("./img/@title")[0]
 		thumb = each.xpath("./img/@src")[0]
 		if str(category) == "Tv":
 			oc.add(DirectoryObject(
