@@ -107,9 +107,9 @@ def ShowEpisodes(title, url):
 	oc = ObjectContainer(title1 = title)
 	page_data = HTML.ElementFromURL(url)
 	for each in page_data.xpath("//table[@class='table']/tbody/tr"):
-		url = each.xpath("./td[@class='entry2']/a/@href")[0]
-		title = each.xpath("./td[@class='entry']/text()")[0] + ' - ' + each.xpath(".//td[@class='entry2']/a/@title")[0]
-		thumb = each.xpath(".//td[@class='entry2']/a/img/@src")[0]
+		url = each.xpath("./td[@class='entry2']/a/@href")[0].strip()
+		title = each.xpath("./td[@class='entry']/text()")[0].strip()
+		thumb = each.xpath("./td[@class='entry2']/a/img/@src")[0]
 
 		oc.add(DirectoryObject(
 			key = Callback(EpisodeDetail, title = title, url = url),
