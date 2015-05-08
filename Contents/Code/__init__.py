@@ -158,7 +158,7 @@ def Search(query):
 		except:
 			title = movie.xpath("./img/@alt")[0]
 		thumb = movie.xpath("./img/@src")[0]
-
+		title = url
 		oc.add(DirectoryObject(
 				key = Callback(EpisodeDetail, title = title, url = url),
 				title = title,
