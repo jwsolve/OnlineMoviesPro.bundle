@@ -53,7 +53,7 @@ def MediaObjectsForURL(url):
 			video_resolution = 720,
 			audio_channels = 2,
 			bitrate = 1500,
-			optimized_for_streaming = True if Client.Product != 'Plex Web' else False
+			optimized_for_streaming = True
 			)
 	]
 
