@@ -1,12 +1,5 @@
 import urllib,urllib2,re,urlparse
 
-HTTP_HEADERS = {
-	'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-	'Host': 'videomega.tv',
-	'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25'
-}
-
-
 ########################################################################################
 def NormalizeURL(url):
 
@@ -47,12 +40,12 @@ def MediaObjectsForURL(url):
 						)
 					)
 				],
-			container = Container.MP4,
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			video_resolution = 720,
-			audio_channels = 2,
-			bitrate = 1500,
+			#container = Container.MP4,
+			#video_codec = VideoCodec.H264,
+			#audio_codec = AudioCodec.AAC,
+			#video_resolution = 720,
+			#audio_channels = 2,
+			#bitrate = 1500,
 			optimized_for_streaming = True if Client.Product != 'Plex Web' else False
 			)
 	]
@@ -63,20 +56,21 @@ def PlayVideo(url, fmt):
 
 	html = HTML.ElementFromURL(url)
 	url = html.xpath("//div[@class='video-embed']/iframe/@src")[0]
+	if "google" in url:
+		return IndirectResponse(VideoClipObject, key = url)
+	else:
+		url = urlparse.urlparse(url).query
+		url = urlparse.parse_qs(url)['ref'][0]
+		url = 'http://videomega.tv/iframe.php?ref=%s' % url
+		referer = url
+		req = urllib2.Request(url,None)
+		req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; rv:34.0) Gecko/20100101 Firefox/34.0')
+		req.add_header('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
+		req.add_header('Referer', referer)
+		response = urllib2.urlopen(req)
+		link = response.read()
+		response.close()
 
-	url = urlparse.urlparse(url).query
-	url = urlparse.parse_qs(url)['ref'][0]
-	url = 'http://videomega.tv/iframe.php?ref=%s' % url
-	referer = url
-	req = urllib2.Request(url,None)
-	req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; rv:34.0) Gecko/20100101 Firefox/34.0')
-	req.add_header('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
-	req.add_header('Referer', referer)
-	response = urllib2.urlopen(req)
-	link = response.read()
-	response.close()
-
-	video_url = re.compile('source src="(.+?)"').findall(link)[0].split("&")[0]
-
-	return IndirectResponse(VideoClipObject, key = video_url)
+		video_url = re.compile('source src="(.+?)"').findall(link)[0].split("&")[0]
+		return IndirectResponse(VideoClipObject, key = video_url)
 
