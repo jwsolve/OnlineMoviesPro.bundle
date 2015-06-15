@@ -1,4 +1,17 @@
 import urllib,urllib2,re,urlparse
+import os
+import sys
+from lxml import html
+
+try:
+	path = os.getcwd().split("?\\")[1].split('Plug-in Support')[0]+"Plug-ins/OnlineMoviesPro.bundle/Contents/Code/Modules/OnlineMoviesPro"
+except:
+	path = os.getcwd().split("Plug-in Support")[0]+"Plug-ins/OnlineMoviesPro.bundle/Contents/Code/Modules/OnlineMoviesPro"
+if path not in sys.path:
+	sys.path.append(path)
+
+import cfscrape
+scraper = cfscrape.create_scraper()
 
 ########################################################################################
 def NormalizeURL(url):
@@ -9,14 +22,15 @@ def NormalizeURL(url):
 ########################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url)
+	page = scraper.get(url)
+	page_html = html.fromstring(page.text)
 
-	title = html.xpath("//h1[@class='border-radius-top-5']/span/text()")[0]
+	title = page_html.xpath("//h1[@class='border-radius-top-5']/span/text()")[0]
 	try:
-		description = html.xpath("//div[@id='video-synopsys']/p[2]/text()")[0]
+		description = page_html.xpath("//div[@id='video-synopsys']/p[2]/text()")[0]
 	except:
 		description = title
-	thumb = html.xpath("//meta[@itemprop='image']/@content")[0]
+	thumb = page_html.xpath("//meta[@itemprop='image']/@content")[0]
 
 	return VideoClipObject(
 		title = title,
@@ -40,22 +54,17 @@ def MediaObjectsForURL(url):
 						)
 					)
 				],
-			#container = Container.MP4,
-			#video_codec = VideoCodec.H264,
-			#audio_codec = AudioCodec.AAC,
-			#video_resolution = 720,
-			#audio_channels = 2,
-			#bitrate = 1500,
 			optimized_for_streaming = True if Client.Product != 'Plex Web' else False
 			)
 	]
 
 ########################################################################################
-@indirect
 def PlayVideo(url, fmt):
 
-	html = HTML.ElementFromURL(url)
-	url = html.xpath("//div[@class='video-embed']/iframe/@src")[0]
+	page = scraper.get(url)
+	page_html = html.fromstring(page.text)
+	url = page_html.xpath("//div[@class='video-embed']/iframe/@src")[0]
+
 	if "google" in url:
 		return IndirectResponse(VideoClipObject, key = url)
 	else:
@@ -72,5 +81,5 @@ def PlayVideo(url, fmt):
 		response.close()
 
 		video_url = re.compile('source src="(.+?)"').findall(link)[0].split("&")[0]
-		return IndirectResponse(VideoClipObject, key = video_url)
+		return Redirect(video_url)
 

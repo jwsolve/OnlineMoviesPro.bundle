@@ -19,6 +19,20 @@ CATEGORY_URL = "http://onlinemovies.pro/category"
 CATEGORIES_URL = "http://onlinemovies.pro/categories/"
 SEARCH_URL = 'http://onlinemovies.pro/'
 
+import os
+import sys
+from lxml import html
+
+try:
+	path = os.getcwd().split("?\\")[1].split('Plug-in Support')[0]+"Plug-ins/OnlineMoviesPro.bundle/Contents/Code/Modules/OnlineMoviesPro"
+except:
+	path = os.getcwd().split("Plug-in Support")[0]+"Plug-ins/OnlineMoviesPro.bundle/Contents/Code/Modules/OnlineMoviesPro"
+if path not in sys.path:
+	sys.path.append(path)
+
+import cfscrape
+scraper = cfscrape.create_scraper()
+
 ######################################################################################
 # Set global variables
 
@@ -31,10 +45,9 @@ def Start():
 	VideoClipObject.thumb = R(ICON_COVER)
 	VideoClipObject.art = R(ART)
 	
-	HTTP.CacheTime = CACHE_1HOUR
 	HTTP.Headers['User-Agent'] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36"
 	HTTP.Headers['Referer'] = "http://onlinemovies.pro/"
-	
+
 ######################################################################################
 # Menu hierarchy
 
@@ -43,7 +56,8 @@ def MainMenu():
 
 	oc = ObjectContainer()
 	oc.add(InputDirectoryObject(key = Callback(Search), title='Search', summary='Search OnlineMovies.Pro', prompt='Search for...'))
-	channel_page = HTML.ElementFromURL(CATEGORIES_URL)
+	page = scraper.get(CATEGORIES_URL)
+	channel_page = html.fromstring(page.text)
 	channels = channel_page.xpath("//ul[@class='listing-cat']/li")
 	for each in channels:
 		url = each.xpath("./a/@title")[0]
@@ -63,10 +77,10 @@ def ShowCategory(title, category, page_count):
 
 	oc = ObjectContainer(title1 = title)
 	if str(page_count) == "1":
-		page_data = HTML.ElementFromURL(CATEGORY_URL + '/' + str(category) + '/?filtre=date')
+		page = scraper.get(CATEGORY_URL + '/' + str(category) + '/?filtre=date')
 	else:
-		page_data = HTML.ElementFromURL(CATEGORY_URL + '/' + str(category) + '/page/' + str(page_count) + '/')
-
+		page = scraper.get(CATEGORY_URL + '/' + str(category) + '/page/' + str(page_count) + '/')
+	page_data = html.fromstring(page.text)
 	for each in page_data.xpath("//ul[@class='listing-videos listing-tube']/li"):
 		url = each.xpath("./a/@href")[0]
 		try:
@@ -105,7 +119,8 @@ def ShowCategory(title, category, page_count):
 def ShowEpisodes(title, url):
 
 	oc = ObjectContainer(title1 = title)
-	page_data = HTML.ElementFromURL(url)
+	page = scraper.get(url)
+	page_data = html.fromstring(page.text)
 	for each in page_data.xpath("//table[@class='table']/tbody/tr"):
 		url = each.xpath("./td[@class='entry2']/a/@href")[0].strip()
 		title = each.xpath("./td[@class='entry']/text()")[0].strip()
@@ -127,7 +142,8 @@ def ShowEpisodes(title, url):
 def EpisodeDetail(title, url):
 	
 	oc = ObjectContainer(title1 = title)
-	page_data = HTML.ElementFromURL(url)
+	page = scraper.get(url)
+	page_data = html.fromstring(page.text)
 	try:
 		title = page_data.xpath("//div[@id='video']/h1/span/text()")[0]
 	except:
@@ -147,18 +163,16 @@ def EpisodeDetail(title, url):
 def Search(query):
 
 	oc = ObjectContainer(title2='Search Results')
-	data = HTTP.Request(SEARCH_URL + '?s=%s' % String.Quote(query, usePlus=True), headers="").content
+	data = scraper.get(SEARCH_URL + '?s=%s' % String.Quote(query, usePlus=True))
+	pagehtml = html.fromstring(data.text)
 
-	html = HTML.ElementFromString(data)
-
-	for movie in html.xpath("//ul[@class='listing-videos listing-tube']/li"):
+	for movie in pagehtml.xpath("//ul[@class='listing-videos listing-tube']/li"):
 		url = movie.xpath("./a/@href")[0]
 		try:
 			title = movie.xpath("./img/@title")[0]
 		except:
 			title = movie.xpath("./img/@alt")[0]
 		thumb = movie.xpath("./img/@src")[0]
-		title = url
 		oc.add(DirectoryObject(
 				key = Callback(EpisodeDetail, title = title, url = url),
 				title = title,
