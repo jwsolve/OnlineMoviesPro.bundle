@@ -1,90 +1,89 @@
-from lxml import html
+import urllib,urllib2,re,urlparse
 import os
 import sys
+from lxml import html
 
 try:
-	path = os.getcwd().split("?\\")[1].split('Plug-in Support')[0]+"Plug-ins\Putlocker.bundle\Contents\Services\URL\Putlocker\Modules"
+	path = os.getcwd().split("?\\")[1].split('Plug-in Support')[0]+"Plug-ins/OnlineMoviesPro.bundle/Contents/Code/Modules/OnlineMoviesPro"
 except:
-	path = os.getcwd().split("Plug-in Support")[0]+"Plug-ins/Putlocker.bundle/Contents/Services/URL/Putlocker/Modules"
+	path = os.getcwd().split("Plug-in Support")[0]+"Plug-ins/OnlineMoviesPro.bundle/Contents/Code/Modules/OnlineMoviesPro"
 if path not in sys.path:
 	sys.path.append(path)
 
-import jsbeautifier
-
-BASE_URL = 'http://putlocker.is/'
+import cfscrape
+scraper = cfscrape.create_scraper()
 
 ########################################################################################
 def NormalizeURL(url):
 
 	return url.split('&')[0]
 
+
 ########################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url)
-	
-	title = page.xpath("//h2[contains(@style,'padding:0px;margin:0px;display:inline;font-weight:normal;border:0px;font-size:12px;')]/a/text()")[0]
-	description = page.xpath("//td[@align='justify']/text()")[0]
-	thumb = page.xpath("//img[contains(@style,'solid silver')]/@src")[0]
-	ratingvalue = url
+	page = scraper.get(url)
+	page_html = html.fromstring(page.text)
+
+	title = page_html.xpath("//h1[@class='border-radius-top-5']/span/text()")[0]
+	try:
+		description = page_html.xpath("//div[@id='video-synopsys']/p[2]/text()")[0]
+	except:
+		description = title
+	thumb = page_html.xpath("//meta[@itemprop='image']/@content")[0]
 
 	return VideoClipObject(
 		title = title,
 		summary = description,
-		thumb = thumb,
-		rating_key = ratingvalue
+		thumb = thumb
 	)
 
 ########################################################################################
 def MediaObjectsForURL(url):
 
 	return [
-		MediaObject(
+        	MediaObject(
 			parts = [
-				PartObject(key=Callback(PlayVideo, url=url, post_url=url, res=720))
-			],
+				PartObject(
+					key = 
+						Callback(
+							PlayVideo,
+							url = url,
+							fmt = 720,
+							post_url = url
+						)
+					)
+				],
 			video_resolution = 720,
 			bitrate = 1500,
 			container = Container.MP4,
 			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
 			optimized_for_streaming = True if Client.Product != 'Plex Web' else False
-		)
+			)
 	]
 
 ########################################################################################
-@indirect
-def PlayVideo(url, res):
+def PlayVideo(url, fmt):
 
-	view_url = ""
-	hosts = ""
-	video_url = ""
-	page = HTML.ElementFromURL(url)
+	page = scraper.get(url)
+	page_html = html.fromstring(page.text)
+	url = page_html.xpath("//div[@class='video-embed']/iframe/@src")[0]
 
-	for each in page.xpath("//td[@class='entry']/a"):
-		try:
-			view_url = str(each.xpath("./@href")[0]) + "," + view_url
-		except:
-			continue
+	if "google" in url:
+		return IndirectResponse(VideoClipObject, key = url)
+	else:
+		url = urlparse.urlparse(url).query
+		url = urlparse.parse_qs(url)['ref'][0]
+		url = 'http://videomega.tv/iframe.php?ref=%s' % url
+		referer = url
+		req = urllib2.Request(url,None)
+		req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; rv:34.0) Gecko/20100101 Firefox/34.0')
+		req.add_header('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
+		req.add_header('Referer', referer)
+		response = urllib2.urlopen(req)
+		link = response.read()
+		response.close()
 
-	view_url = view_url.rstrip(',')
-	view_url = sorted(view_url.split(','), key=str.lower)
+		video_url = re.compile('source src="(.+?)"').findall(link)[0].split("&")[0]
+		return Redirect(video_url)
 
-	for vurl in view_url:
-		if "thevideos" in vurl:
-			host = HTTP.Request(videourl).content
-			tree = html.fromstring(host)
-			beautify = jsbeautifier.beautify(tree.xpath("//script[1]/text()")[0])
-			video_url = Regex('file:"([^"]+)"').search(beautify).groups()[0]
-			return IndirectResponse(VideoClipObject, key = video_url)
-		if "thevideo.me" in vurl:
-			host = HTTP.Request(vurl.replace(".me/",".me/embed-",1) + '.html').content
-			tree = html.fromstring(host)
-			beautify = jsbeautifier.beautify(tree.xpath("//script[1]/text()")[0])
-			video_url = Regex('file:"([^"]+)"').search(beautify).groups()[0]
-			return IndirectResponse(VideoClipObject, key = video_url)
-		if "vodlocker" in vurl:
-			host = HTTP.Request(vurl.replace(".com/",".com/embed-",1) + '.html').content
-			video_url = Regex('file:\s"([^"]+)"').search(host).groups()[0]
-			return IndirectResponse(VideoClipObject, key = video_url)

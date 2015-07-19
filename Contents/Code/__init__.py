@@ -14,10 +14,10 @@ ICON_SEARCH = "icon-search.png"
 ICON_NEXT = "icon-next.png"
 ICON_MOVIES = "icon-movies.png"
 ICON_SERIES = "icon-series.png"
-BASE_URL = "http://onlinemovies.pro"
-CATEGORY_URL = "http://onlinemovies.pro/category"
-CATEGORIES_URL = "http://onlinemovies.pro/categories/"
-SEARCH_URL = 'http://onlinemovies.pro/'
+BASE_URL = "http://www.onlinemovies-pro.com"
+CATEGORY_URL = "http://www.onlinemovies-pro.com/category"
+CATEGORIES_URL = "http://www.onlinemovies-pro.com/categories/"
+SEARCH_URL = 'http://www.onlinemovies-pro.com/'
 
 import os
 import sys
@@ -68,6 +68,9 @@ def MainMenu():
 		oc.add(DirectoryObject(key = Callback(ShowCategory, title = title, category = url, page_count = 1), title = title, thumb = thumb))
 
 	return oc
+
+def PerformUpdate():
+	return updater.PerformUpdate()
 
 ######################################################################################
 # Creates page url from category and creates objects from that page
