@@ -10,6 +10,7 @@ except:
 if path not in sys.path:
 	sys.path.append(path)
 
+import jsbeautifier
 import cfscrape
 scraper = cfscrape.create_scraper()
 
@@ -53,16 +54,11 @@ def MediaObjectsForURL(url):
 							post_url = url
 						)
 					)
-				],
-			video_resolution = 720,
-			bitrate = 1500,
-			container = Container.MP4,
-			video_codec = VideoCodec.H264,
-			optimized_for_streaming = True if Client.Product != 'Plex Web' else False
+				]
 			)
 	]
 
-########################################################################################
+#######################################################################################
 def PlayVideo(url, fmt):
 
 	page = scraper.get(url)
@@ -84,6 +80,9 @@ def PlayVideo(url, fmt):
 		link = response.read()
 		response.close()
 
-		video_url = re.compile('source src="(.+?)"').findall(link)[0].split("&")[0]
+		filekey = Regex('eval([^"]+.*)').search(link).group(0)
+		video_url = jsbeautifier.beautify(filekey)
+		video_url = video_url.replace('$("video").attr("src", "','',1).replace('");','',1)
+
 		return Redirect(video_url)
 
