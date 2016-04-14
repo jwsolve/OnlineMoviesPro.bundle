@@ -2,6 +2,102 @@ import urllib,urllib2,re,urlparse
 import os
 import sys
 from lxml import html
+import string
+
+def detect(source):
+    """Detects whether `source` is P.A.C.K.E.R. coded."""
+    source = source.replace(' ','')
+    if re.search('eval(function(p,a,c,k,e,(?:r|d)'): return True
+    else: return False
+
+def unpack(source):
+    """Unpacks P.A.C.K.E.R. packed js code."""
+    payload, symtab, radix, count = filterargs(source)
+
+    if count != len(symtab):
+        raise UnpackingError('Malformed p.a.c.k.e.r. symtab.')
+
+    try:
+        unbase = Unbaser(radix)
+    except TypeError:
+        raise UnpackingError('Unknown p.a.c.k.e.r. encoding.')
+
+    def lookup(match):
+        """Look up symbols in the synthetic symtab."""
+        word  = match.group(0)
+        return symtab[unbase(word)] or word
+
+    source = re.sub(r'\b\w+\b', lookup, payload)
+    return replacestrings(source)
+
+def filterargs(source):
+    """Juice from a source file the four args needed by decoder."""
+    argsregex = (r"}\('(.*)', *(\d+), *(\d+), *'(.*?)'\.split\('\|'\)")
+    args = re.search(argsregex, source, re.DOTALL).groups()
+
+    try:
+        return args[0], args[3].split('|'), int(args[1]), int(args[2])
+    except ValueError:
+        raise UnpackingError('Corrupted p.a.c.k.e.r. data.')
+
+def replacestrings(source):
+    """Strip string lookup table (list) and replace values in source."""
+    match = re.search(r'var *(_\w+)\=\["(.*?)"\];', source, re.DOTALL)
+
+    if match:
+        varname, strings = match.groups()
+        startpoint = len(match.group(0))
+        lookup = strings.split('","')
+        variable = '%s[%%d]' % varname
+        for index, value in enumerate(lookup):
+            source = source.replace(variable % index, '"%s"' % value)
+        return source[startpoint:]
+    return source
+
+
+class Unbaser(object):
+    """Functor for a given base. Will efficiently convert
+    strings to natural numbers."""
+    ALPHABET  = {
+        64 : '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/',
+        95 : (' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+              '[\]^_`abcdefghijklmnopqrstuvwxyz{|}~')
+    }
+
+    def __init__(self, base):
+        self.base = base
+
+        # If base can be handled by int() builtin, let it do it for us
+        if 2 <= base <= 36:
+            self.unbase = lambda string: int(string, base)
+        else:
+            # Build conversion dictionary cache
+            try:
+                self.dictionary = dict((cipher, index) for
+                    index, cipher in enumerate(self.ALPHABET[base]))
+            except KeyError:
+                try:
+                    self.dictionary = dict((cipher, index) for
+                        index, cipher in enumerate(self.ALPHABET[64][:base]))
+                except KeyError:
+                    raise TypeError('Unsupported base encoding.')
+
+            self.unbase = self.dictunbaser
+
+    def __call__(self, string):
+        return self.unbase(string)
+
+    def dictunbaser(self, string):
+        """Decodes a  value to an integer."""
+        ret = 0
+        for index, cipher in enumerate(string[::-1]):
+            ret += (self.base ** index) * self.dictionary[cipher]
+        return ret
+
+class UnpackingError(Exception):
+    """Badly packed source or general error. Argument is a
+    meaningful description."""
+    pass
 
 try:
 	path = os.getcwd().split("?\\")[1].split('Plug-in Support')[0]+"Plug-ins/OnlineMoviesPro.bundle/Contents/Code/Modules/OnlineMoviesPro"
@@ -10,7 +106,6 @@ except:
 if path not in sys.path:
 	sys.path.append(path)
 
-import jsbeautifier
 import cfscrape
 scraper = cfscrape.create_scraper()
 
@@ -54,7 +149,13 @@ def MediaObjectsForURL(url):
 							post_url = url
 						)
 					)
-				]
+				],
+			video_resolution = 720,
+			bitrate = 1500,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
 			)
 	]
 
@@ -79,10 +180,7 @@ def PlayVideo(url, fmt):
 		response = urllib2.urlopen(req)
 		link = response.read()
 		response.close()
-
 		filekey = Regex('eval([^"]+.*)').search(link).group(0)
-		video_url = jsbeautifier.beautify(filekey)
-		video_url = video_url.replace('$("video").attr("src", "','',1).replace('");','',1)
-
+		unpacked = unpack(filekey)
+		video_url = unpacked.split('src","')[1].split('"')[0]
 		return Redirect(video_url)
-
